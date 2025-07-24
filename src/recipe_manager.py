@@ -2,11 +2,9 @@ import os
 import json
 from recipe import Recipe
 
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-RECIPES_DIR = os.path.join(BASE_DIR, "data", "recipes")
 
 class RecipeManager:
-    def __init__(self, recipes_dir=RECIPES_DIR):
+    def __init__(self, recipes_dir):
         self.recipes_dir = recipes_dir
         os.makedirs(self.recipes_dir, exist_ok=True)
 

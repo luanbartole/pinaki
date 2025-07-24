@@ -1,6 +1,9 @@
 # Ignore all recipe files
 data/recipes/*.json
 
+#Ignore the ingredients json file
+data/ingredients.json
+
 # Keep the folder with .gitkeep
 !data/recipes/.gitkeep
 
