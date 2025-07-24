@@ -2,6 +2,7 @@ from src.recipe_manager import RecipeManager
 from src.recipe import Recipe
 from src.price_table import IngredientPriceTable
 from src.config import CostConfig
+from src.calculator import Calculator
 import datetime
 import os
 
@@ -144,7 +145,7 @@ def ingredient_prices_menu(last_purchase_date):
 def cost_config_menu():
     while True:
         print("\n=== MENU CUSTOS E LUCRO ===\n")
-        print("1. Configurar custos adicionais (embalagem, colher)")
+        print("1. Configurar custos adicionais (embalagem, colher, lacre)")
         print("2. Configurar outras despesas (água, luz)")
         print("3. Configurar percentual de mão de obra")
         print("4. Configurar percentual de lucro")
@@ -156,13 +157,28 @@ def cost_config_menu():
         match choice:
             case '1':
                 try:
-                    pack_total = float(input("\nPreço total das embalagens (R$): ").replace(",", "."))
-                    pack_qty = int(input("Quantidade de embalagens compradas: "))
+                    pack_total_str = input("\nPreço total das embalagens (R$) [Enter para manter atual]: ").replace(",",
+                                                                                                                    ".")
+                    pack_qty_str = input("Quantidade de embalagens compradas [Enter para manter atual]: ")
 
-                    spoon_total = float(input("\nPreço total das colheres (R$): ").replace(",", "."))
-                    spoon_qty = int(input("Quantidade de colheres compradas: "))
+                    spoon_total_str = input("\nPreço total das colheres (R$) [Enter para manter atual]: ").replace(",",
+                                                                                                                   ".")
+                    spoon_qty_str = input("Quantidade de colheres compradas [Enter para manter atual]: ")
 
-                    config.update_extras(pack_total, pack_qty, spoon_total, spoon_qty)
+                    seal_total_str = input("\nPreço total dos lacres (R$) [Enter para manter atual]: ").replace(",",
+                                                                                                                ".")
+                    seal_qty_str = input("Quantidade de lacres comprados [Enter para manter atual]: ")
+
+                    pack_total = float(pack_total_str) if pack_total_str else config.packaging_total
+                    pack_qty = int(pack_qty_str) if pack_qty_str else config.packaging_qty
+
+                    spoon_total = float(spoon_total_str) if spoon_total_str else config.spoon_total
+                    spoon_qty = int(spoon_qty_str) if spoon_qty_str else config.spoon_qty
+
+                    seal_total = float(seal_total_str) if seal_total_str else config.seal_total
+                    seal_qty = int(seal_qty_str) if seal_qty_str else config.seal_qty
+
+                    config.update_extras(pack_total, pack_qty, spoon_total, spoon_qty, seal_total, seal_qty)
                     config.save(CONFIG_FILE)
                     print("Custos atualizados com sucesso.")
                 except ValueError:
@@ -207,6 +223,54 @@ def cost_config_menu():
             case _:
                 print("Opção inválida! Tente novamente.")
 
+def calculate_recipe_cost():
+    recipes = manager.list_recipes()
+    if not recipes:
+        print("nenhuma receita cadastrada para calcular custo.")
+        return
+
+    print("\nReceitas disponíveis:")
+    for i, recipe_name in enumerate(recipes, 1):
+        print(f"{i}. {recipe_name}")
+
+    choice = input("Escolha o número da receita para calcular o custo: ").strip()
+    if not choice.isdigit() or not (1 <= int(choice) <= len(recipes)):
+        print("Opção inválida.")
+        return
+
+    selected_recipe_name = recipes[int(choice) - 1]
+    recipe = manager.load_recipe(selected_recipe_name)
+
+    if not recipe:
+        print("Erro ao carregar a receita.")
+        return
+
+    calculator = Calculator(recipe, price_table, config)
+    result = calculator.compute()
+
+    print(f"\n=== CUSTO DA RECEITA: {recipe.name} ===\n")
+    print("Ingredientes:")
+    for item in result["ingredientes"]:
+        print(
+            f" - {item['nome']}: {item['quantidade']} {item['unidade']} "
+            f"x R$ {item['unit_price']:.4f} = R$ {item['cost']:.2f}"
+        )
+    print(f"\nCusto total dos ingredientes: R$ {result['custo_ingredientes']:.2f}")
+    print(f"Custos extras (embalagem, colher, despesas): R$ {result['extras']:.2f}")
+    print(f"Mão de obra: R$ {result['mao_de_obra']:.2f}")
+    print(f"Custo total: R$ {result['custo_total']:.2f}")
+    print(f"Custo por bolo (unidade): R$ {result['por_bolo']:.2f}")
+    print(f"Preço de venda sugerido: R$ {result['preco_venda']:.2f}")
+    print(f"Lucro unitário estimado: R$ {result['lucro_unitario']:.2f}")
+
+
+
+
+
+
+
+
+
 def main():
     last_purchase_date = None
 
@@ -226,7 +290,7 @@ def main():
             case '2':
                 last_purchase_date = ingredient_prices_menu(last_purchase_date)
             case '3':
-                print("Função calcular custo ainda não implementada.")
+                calculate_recipe_cost()
             case '4':
                 cost_config_menu()
             case '5':

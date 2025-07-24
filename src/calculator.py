@@ -28,7 +28,13 @@ class Calculator:
                 "cost": cost
             })
 
-        extras = self.config.packaging + self.config.spoon + self.config.expenses
+        extras = (
+                self.config.packaging_unit_cost() +
+                self.config.spoon_unit_cost() +
+                self.config.seal_unit_cost() +
+                self.config.calculate_extra_expenses(ingredient_total)
+        )
+
         labor = self.config.calculate_labor(ingredient_total)
         total_cost = ingredient_total + extras + labor
         cost_per_unit = total_cost / self.recipe.servings
