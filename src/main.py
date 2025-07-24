@@ -249,16 +249,40 @@ def calculate_recipe_cost():
     calculator = Calculator(recipe, price_table, config, manager)
     result = calculator.compute()
 
-    print(f"\n=== CUSTO DA RECEITA DE MONTAGEM: {recipe.name} ===\n")
-    print(f"Custo total dos ingredientes: R$ {result['custo_ingredientes']:.2f}")
-    print(f"Custos extras (embalagem, colher, lacre, despesas): R$ {result['extras']:.2f}")
-    print(f"Mão de obra: R$ {result['mao_de_obra']:.2f}")
-    print(f"Custo total: R$ {result['custo_total']:.2f}")
-    print(f"Custo por bolo (unidade): R$ {result['por_bolo']:.2f}")
-    print(f"Preço de venda sugerido: R$ {result['preco_venda']:.2f}")
-    print(f"Lucro unitário estimado: R$ {result['lucro_unitario']:.2f}")
-    print(f"Lucro unitário estimado: R$ {result['lucro_unitario']:.2f}")
+    servings = recipe.servings
 
+    unit_fixed_costs = (
+        config.packaging_unit_cost() +
+        config.spoon_unit_cost() +
+        config.seal_unit_cost()
+    )
+
+    total_variable_expenses = config.calculate_variable_expenses_percent(result['custo_ingredientes'])
+
+    # Aqui pega os percentuais diretamente do config para exibir
+    expense_pct = config.expense_percent
+    labor_pct = config.labor_percent
+    profit_pct = config.profit_percent
+
+    print(f"\n=== CUSTO DA RECEITA DE MONTAGEM: {recipe.name} ===")
+    print(f"Rendimento: {servings}\n")
+
+    print("Produção e Lucro (Total):")
+    print(f"- Custo total dos ingredientes: R$ {result['custo_ingredientes']:.2f}")
+    print(f"- Custos fixos unitários x rendimento: R$ {unit_fixed_costs * servings:.2f}")
+    print(f"- Outras despesas ({expense_pct:.0f}% sobre ingredientes): R$ {total_variable_expenses:.2f}")
+    print(f"- Mão de obra ({labor_pct:.0f}% sobre ingredientes): R$ {result['mao_de_obra']:.2f}")
+    print(f"- Custo total (ingredientes + extras + mão): R$ {result['custo_total']:.2f}")
+    print(f"- Lucro total estimado ({profit_pct:.0f}%): R$ {result['lucro']:.2f}")
+    print(f"- Preço de venda sugerido: R$ {result['preco_venda']:.2f}")
+
+    print("\nProdução e Lucro (Unidade):")
+    print(f"- Custos fixos unitários (embalagem, colher, lacre): R$ {unit_fixed_costs:.2f}")
+    print(f"- Outras despesas ({expense_pct:.0f}% sobre ingredientes): R$ {(total_variable_expenses / servings):.2f}")
+    print(f"- Mão de obra ({labor_pct:.0f}% sobre ingredientes): R$ {(result['mao_de_obra'] / servings):.2f}")
+    print(f"- Custo por bolo (unidade): R$ {result['por_bolo']:.2f}")
+    print(f"- Lucro unitário estimado ({profit_pct:.0f}% sobre ingredientes): R$ {result['lucro_unitario']:.2f}")
+    print(f"- Preço de venda sugerido (unidade): R$ {result['preco_venda'] / servings:.2f}")
 
 def main():
     last_purchase_date = None

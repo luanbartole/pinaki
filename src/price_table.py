@@ -28,7 +28,7 @@ class IngredientPriceTable:
         except IOError:
             print("Erro ao salvar o arquivo de preços.")
 
-    def get_unit_price(self, name):
+    def get_unit_price(self, name, unidade=None):
         item = self.price_data.get(name)
         if not item:
             return None
@@ -37,8 +37,8 @@ class IngredientPriceTable:
         quantidade = item["quantidade"]
         unidade_cadastrada = item.get("unidade")
 
-        # Se unidades iguais, só retorna o preço unitário direto
-        if unidade_cadastrada == unidade:
+        # Se unidade não informada, assume a unidade cadastrada e retorna preço por unidade
+        if unidade is None or unidade_cadastrada == unidade:
             return preco / quantidade
 
         # Conversões simples
@@ -55,7 +55,6 @@ class IngredientPriceTable:
             quantidade_convertida = quantidade * fator
             return preco / quantidade_convertida
 
-        # Se não conseguir converter, apenas retorna None (ou lança erro)
         print(f"Unidade incompatível: cadastro '{unidade_cadastrada}', pedido '{unidade}'.")
         return None
 
@@ -77,4 +76,3 @@ class IngredientPriceTable:
 
     def to_dict(self):
         return self.price_data
-

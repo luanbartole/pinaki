@@ -27,8 +27,8 @@ class CostConfig:
     def calculate_labor(self, ingredient_cost):
         return (self.labor_percent / 100) * ingredient_cost
 
-    def calculate_profit(self, base_cost):
-        return base_cost * (1 + self.profit_percent / 100)
+    def calculate_profit(self, ingredient_cost):
+        return (self.profit_percent / 100) * ingredient_cost
 
     def calculate_variable_expenses_percent(self, ingredient_cost):
         # despesas percentuais (água, luz, etc)

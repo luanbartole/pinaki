@@ -1,5 +1,3 @@
-# src/calculator.py
-
 class Calculator:
     def __init__(self, recipe, price_table, config, recipe_manager):
         self.recipe = recipe
@@ -30,52 +28,88 @@ class Calculator:
                     print(f"AVISO: Sub-receita '{comp_name}' também é montagem. Ignorando para evitar recursão.")
                     continue
 
-                # Calcular custo base da sub-receita (massa, recheio, calda)
+                # Calcular custo base e peso total da sub-receita
                 sub_calc = Calculator(sub_recipe, self.price_table, self.config, self.recipe_manager)
                 sub_result = sub_calc._compute_base_cost()
 
-                custo_total_sub = sub_result["custo_total"]
-                rendimento_sub = sub_recipe.servings
+                total_sub_cost = sub_result["custo_total"]
+                total_sub_weight = sub_result["peso_total"]
+                servings = sub_recipe.servings
 
-                proportional_cost = (comp_qty / rendimento_sub) * custo_total_sub
+                if total_sub_weight is None or total_sub_weight == 0:
+                    print(f"AVISO: Peso total da sub-receita '{comp_name}' inválido. Pulando.")
+                    continue
 
-                print(f"  Componente '{comp_name}': {comp_qty}{comp_unit} -> custo proporcional: R$ {proportional_cost:.2f}")
+                weight_per_serving = total_sub_weight / servings
+                used_weight = comp_qty  # assume que a unidade é compatível com g/ml
+
+                proportional_cost = (used_weight / total_sub_weight) * total_sub_cost
+
+                print(
+                    f"  Componente '{comp_name}': {comp_qty}{comp_unit} -> custo proporcional: R$ {proportional_cost:.2f}")
 
                 total_cost += proportional_cost
 
+        # Cálculos parciais com base em UMA unidade (1 bolo de pote)
         extras = self.config.calculate_total_extra_costs(total_cost)
         labor = self.config.calculate_labor(total_cost)
-        partial_cost = total_cost + extras + labor
-        sale_price = self.config.calculate_profit(partial_cost)
+        profit = self.config.calculate_profit(total_cost)
+
+        # Número de bolos gerados pela montagem
+        total_servings = self.recipe.servings
+
+        # Cálculo do custo total da receita inteira (e não só de 1 unidade)
+        total_ingredients_cost = total_cost * total_servings
+        total_extras = extras * total_servings
+        total_labor = labor * total_servings
+        total_profit = profit * total_servings
+
+        final_total_cost = total_ingredients_cost + total_extras + total_labor
+        final_sale_price = total_ingredients_cost + total_labor + total_profit + total_extras
 
         return {
-            "custo_ingredientes": total_cost,
-            "extras": extras,
-            "mao_de_obra": labor,
-            "custo_total": partial_cost,
-            "preco_venda": sale_price,
-            "por_bolo": partial_cost / self.recipe.servings,
-            "lucro_unitario": sale_price - partial_cost
+            "custo_ingredientes": total_ingredients_cost,
+            "extras": total_extras,
+            "mao_de_obra": total_labor,
+            "lucro": total_profit,
+            "custo_total": final_total_cost,
+            "lucro_unitario": total_profit / total_servings,
+            "preco_venda": final_sale_price,
+            "por_bolo": final_total_cost / total_servings
         }
 
     def _compute_base_cost(self):
         ingredient_cost = 0.0
+        total_weight = 0.0
+
         for ingredient in self.recipe.ingredients:
             name = ingredient["nome"]
             qty = ingredient["quantidade"]
             unit = ingredient["unidade"]
 
-            unit_price = self.price_table.get_unit_price(name)
-            if unit_price is None:
-                print(f"AVISO: Preço não encontrado para ingrediente '{name}'. Pulando.")
+            # Pular ingredientes sem preço (como água)
+            if name not in self.price_table.price_data:
                 continue
+
+            # Calcular custo do ingrediente
+            unit_price = self.price_table.get_unit_price(name, unit)
+            if unit_price is None:
+                continue
+
             ingredient_cost += unit_price * qty
 
-        # Para sub-receitas, normalmente não soma extras nem mão de obra separadamente
-        total_cost = ingredient_cost
+            # Calcular peso total (convertendo unidades quando necessário)
+            if unit in ["g", "ml"]:
+                total_weight += qty
+            elif unit == "kg":
+                total_weight += qty * 1000
+            elif unit == "l":
+                total_weight += qty * 1000
+            # Para ovos (un), usar peso médio de 50g por ovo
+            elif unit == "un" and name == "ovo":
+                total_weight += qty * 50  # 50g por ovo
+
         return {
-            "custo_ingredientes": ingredient_cost,
-            "extras": 0,
-            "mao_de_obra": 0,
-            "custo_total": total_cost
+            "custo_total": ingredient_cost,
+            "peso_total": total_weight
         }
