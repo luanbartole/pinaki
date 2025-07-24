@@ -15,6 +15,6 @@ class Recipe:
     def from_dict(data):
         return Recipe(
             name=data["nome"],
-            servings=["rendimento_bolos"],
+            servings=data["rendimento_bolos"],
             ingredients=data["ingredientes"]
         )

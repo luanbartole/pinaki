@@ -1,3 +1,10 @@
+# Ignore all recipe files
+data/recipes/*.json
+
+# Keep the folder with .gitkeep
+!data/recipes/.gitkeep
+
+
 # Ignore IDE/editor config folders
 .idea/                # JetBrains IDEs like PyCharm
 .vscode/              # VS Code settings
