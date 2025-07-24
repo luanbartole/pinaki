@@ -8,13 +8,14 @@ import os
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 RECIPES_DIR = os.path.join(BASE_DIR, "data", "recipes")
 PRICES_FILE = os.path.join(BASE_DIR, "data", "ingredients.json")
+CONFIG_FILE = os.path.join(BASE_DIR, "data", "config.json")
 
 manager = RecipeManager(recipes_dir=RECIPES_DIR)
-price_table = IngredientPriceTable(file_path=PRICES_FILE)  # Você pode depois carregar de um JSON
-config = CostConfig({})
+price_table = IngredientPriceTable(file_path=PRICES_FILE)
+config = CostConfig.load(CONFIG_FILE)
 
 
-def menu_recipes():
+def recipes_menu():
     while True:
         print("\n=== MENU RECEITAS ===\n")
         print("1. Cadastrar nova receita")
@@ -72,7 +73,7 @@ def menu_recipes():
             case _:
                 print("Opção inválida! Tente novamente.")
 
-def menu_prices(last_purchase_date):
+def ingredient_prices_menu(last_purchase_date):
     while True:
         print("\n=== MENU PREÇOS DE INGREDIENTES ===\n")
         print("1. Adicionar ou atualizar preço de ingrediente")
@@ -140,21 +141,69 @@ def menu_prices(last_purchase_date):
                 print("Opção inválida! Tente novamente.")
     return last_purchase_date
 
-def menu_costs():
+def cost_config_menu():
     while True:
         print("\n=== MENU CUSTOS E LUCRO ===\n")
-        print("1. Configurar custos adicionais")
-        print("2. Configurar lucro desejado")
-        print("3. Voltar ao menu principal")
-        escolha = input("Escolha uma opção: ")
+        print("1. Configurar custos adicionais (embalagem, colher)")
+        print("2. Configurar outras despesas (água, luz)")
+        print("3. Configurar percentual de mão de obra")
+        print("4. Configurar percentual de lucro")
+        print("5. Ver configurações atuais")
+        print("6. Voltar ao menu principal")
 
-        match escolha:
+        choice = input("Escolha uma opção: ")
+
+        match choice:
             case '1':
-                print("Função configurar custos adicionais ainda não implementada.")
+                try:
+                    pack_total = float(input("\nPreço total das embalagens (R$): ").replace(",", "."))
+                    pack_qty = int(input("Quantidade de embalagens compradas: "))
+
+                    spoon_total = float(input("\nPreço total das colheres (R$): ").replace(",", "."))
+                    spoon_qty = int(input("Quantidade de colheres compradas: "))
+
+                    config.update_extras(pack_total, pack_qty, spoon_total, spoon_qty)
+                    config.save(CONFIG_FILE)
+                    print("Custos atualizados com sucesso.")
+                except ValueError:
+                    print("Valores inválidos. Use números.")
+
             case '2':
-                print("Função configurar lucro ainda não implementada.")
+                try:
+                    expense_percent = float(
+                        input("\nPercentual de outras despesas (água, luz, etc.) [%] (padrão: 20): ").replace(",", "."))
+                    config.update_expense_percent(expense_percent)
+                    config.save(CONFIG_FILE)
+                    print("Outras despesas atualizadas com sucesso.")
+                except ValueError:
+                    print("Valor inválido.")
+
             case '3':
+                try:
+                    labor_percent = float(input("\nPercentual de mão de obra (%): ").replace(",", "."))
+                    config.update_labor_percent(labor_percent)
+                    config.save(CONFIG_FILE)
+                    print("Percentual de mão de obra atualizado com sucesso.")
+                except ValueError:
+                    print("Valor inválido. Use um número.")
+
+            case '4':
+                try:
+                    profit_percent = float(input("\nPercentual de lucro desejado (%): ").replace(",", "."))
+                    config.update_profit_percent(profit_percent)
+                    config.save(CONFIG_FILE)
+                    print("Percentual de lucro atualizado com sucesso.")
+                except ValueError:
+                    print("Valor inválido. Use um número.")
+
+            case '5':
+                print("\n=== CONFIGURAÇÔES ATUAIS ===")
+                print(config.summary())
+
+            case '6':
                 break
+
+
             case _:
                 print("Opção inválida! Tente novamente.")
 
@@ -173,13 +222,13 @@ def main():
 
         match choice:
             case '1':
-                menu_recipes()
+                recipes_menu()
             case '2':
-                last_purchase_date = menu_prices(last_purchase_date)
+                last_purchase_date = ingredient_prices_menu(last_purchase_date)
             case '3':
                 print("Função calcular custo ainda não implementada.")
             case '4':
-                menu_costs()
+                cost_config_menu()
             case '5':
                 print("Função gerar relatório ainda não implementada.")
             case '6':

@@ -3,6 +3,7 @@ data/recipes/*.json
 
 #Ignore the ingredients json file
 data/ingredients.json
+data/config.json
 
 # Keep the folder with .gitkeep
 !data/recipes/.gitkeep
