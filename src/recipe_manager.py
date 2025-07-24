@@ -97,9 +97,12 @@ class RecipeManager:
         return Recipe.from_dict(data)
 
     def list_recipes(self) -> list[str]:
-        files = os.listdir(self.recipes_dir)
-        # Remove extension and replace underscores with spaces for display
-        recipes = [os.path.splitext(f)[0].replace('_',' ') for f in files if f.endswith('.json')]
+        recipes = []
+        for file in os.listdir(self.recipes_dir):
+            if file.endswith(".json"):
+                recipe = self.load_recipe(file[:-5])
+                if recipe:
+                    recipes.append(recipe)
         return recipes
 
     def edit_recipe(self, recipe_name: str):

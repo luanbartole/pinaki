@@ -5,6 +5,8 @@ from src.config import CostConfig
 from src.calculator import Calculator
 import datetime
 import os
+from collections import defaultdict
+
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 RECIPES_DIR = os.path.join(BASE_DIR, "data", "recipes")
@@ -41,13 +43,24 @@ def recipes_menu():
                 else:
                     print("Receita não encontrada.")
             case '4':
-                receitas = manager.list_recipes()
-                if not receitas:
-                    print("Nenhuma receita cadastrada.")
+                recipes = manager.list_recipes()
+                if not recipes:
+                    print("Nenhuma receita encontrada.")
                 else:
-                    print("Receitas cadastradas:")
-                    for r in receitas:
-                        print(f" - {r}")
+                    print("\nReceitas cadastradas:")
+
+                    # Agrupar por categoria
+                    categorized = defaultdict(list)
+                    for r in recipes:
+                        category = getattr(r, "category", "sem categoria")
+                        categorized[category].append(r.name)
+
+                    # Imprimir por categoria
+                    for category, names in categorized.items():
+                        print(f"[{category.upper()}]")
+                        for name in names:
+                            print(f" - {name}")
+
             case '5':
                 break
             case _:
@@ -204,10 +217,14 @@ def cost_config_menu():
                 print("Opção inválida! Tente novamente.")
 
 def calculate_recipe_cost():
-    recipes = manager.list_recipes()
+    recipes = sorted([
+        r.name for r in manager.list_recipes()
+        if r.category == "montagem"
+    ])
+
     if not recipes:
-        print("Nenhuma receita cadastrada para calcular custo.")
-        return
+        print("\n⚠️ Nenhuma receita com categoria 'montagem' foi encontrada.")
+        return  # or loop/exit back to menu
 
     print("\nReceitas disponíveis:")
     for i, recipe_name in enumerate(recipes, 1):
