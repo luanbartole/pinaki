@@ -28,29 +28,10 @@ def recipes_menu():
 
         match escolha:
             case '1':
-                name = input("\nNome da receita: ")
-                servings = int(input("Rendimento (quantos bolos): "))
-                ingredients = []
-                print("Adicione os ingredientes (deixe o nome vazio para encerrar): ")
-                while True:
-                    nome = input("Nome do Ingrediente: ")
-                    if not nome:
-                        break
-                    quantidade = float(input("Quantidade: "))
-                    unidade = input("Unidade (ex: g, ml): ")
-                    ingredients.append({
-                        "nome": nome,
-                        "quantidade": quantidade,
-                        "unidade": unidade
-                    })
-                recipe = Recipe(name, servings, ingredients)
-                manager.save_recipe(recipe)
-                print("Receita salva com sucesso.")
-
+                manager.register_recipe()  # Call your new function here
             case '2':
                 name = input("Nome da receita a editar: ")
                 manager.edit_recipe(name)
-
             case '3':
                 nome = input("Nome da receita a excluir: ")
                 file_path = os.path.join(manager.recipes_dir, f"{nome.lower().replace(' ', '_')}.json")
@@ -59,7 +40,6 @@ def recipes_menu():
                     print("Receita excluída com sucesso.")
                 else:
                     print("Receita não encontrada.")
-
             case '4':
                 receitas = manager.list_recipes()
                 if not receitas:
@@ -70,9 +50,9 @@ def recipes_menu():
                         print(f" - {r}")
             case '5':
                 break
-
             case _:
                 print("Opção inválida! Tente novamente.")
+
 
 def ingredient_prices_menu(last_purchase_date):
     while True:
@@ -226,7 +206,7 @@ def cost_config_menu():
 def calculate_recipe_cost():
     recipes = manager.list_recipes()
     if not recipes:
-        print("nenhuma receita cadastrada para calcular custo.")
+        print("Nenhuma receita cadastrada para calcular custo.")
         return
 
     print("\nReceitas disponíveis:")
@@ -245,30 +225,22 @@ def calculate_recipe_cost():
         print("Erro ao carregar a receita.")
         return
 
-    calculator = Calculator(recipe, price_table, config)
+    if recipe.category != "montagem":
+        print("Só é possível calcular o custo de receitas do tipo 'montagem'.")
+        return
+
+    calculator = Calculator(recipe, price_table, config, manager)
     result = calculator.compute()
 
-    print(f"\n=== CUSTO DA RECEITA: {recipe.name} ===\n")
-    print("Ingredientes:")
-    for item in result["ingredientes"]:
-        print(
-            f" - {item['nome']}: {item['quantidade']} {item['unidade']} "
-            f"x R$ {item['unit_price']:.4f} = R$ {item['cost']:.2f}"
-        )
-    print(f"\nCusto total dos ingredientes: R$ {result['custo_ingredientes']:.2f}")
-    print(f"Custos extras (embalagem, colher, despesas): R$ {result['extras']:.2f}")
+    print(f"\n=== CUSTO DA RECEITA DE MONTAGEM: {recipe.name} ===\n")
+    print(f"Custo total dos ingredientes: R$ {result['custo_ingredientes']:.2f}")
+    print(f"Custos extras (embalagem, colher, lacre, despesas): R$ {result['extras']:.2f}")
     print(f"Mão de obra: R$ {result['mao_de_obra']:.2f}")
     print(f"Custo total: R$ {result['custo_total']:.2f}")
     print(f"Custo por bolo (unidade): R$ {result['por_bolo']:.2f}")
     print(f"Preço de venda sugerido: R$ {result['preco_venda']:.2f}")
     print(f"Lucro unitário estimado: R$ {result['lucro_unitario']:.2f}")
-
-
-
-
-
-
-
+    print(f"Lucro unitário estimado: R$ {result['lucro_unitario']:.2f}")
 
 
 def main():

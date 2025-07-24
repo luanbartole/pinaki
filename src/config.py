@@ -27,8 +27,22 @@ class CostConfig:
     def calculate_labor(self, ingredient_cost):
         return (self.labor_percent / 100) * ingredient_cost
 
-    def calculate_extra_expenses(self, ingredient_cost):
+    def calculate_profit(self, base_cost):
+        return base_cost * (1 + self.profit_percent / 100)
+
+    def calculate_variable_expenses_percent(self, ingredient_cost):
+        # despesas percentuais (água, luz, etc)
         return (self.expense_percent / 100) * ingredient_cost
+
+    def calculate_total_extra_costs(self, ingredient_cost):
+        # soma custos fixos unitários + despesas percentuais
+        unit_extras = (
+            self.packaging_unit_cost() +
+            self.spoon_unit_cost() +
+            self.seal_unit_cost()
+        )
+        percent_expenses = self.calculate_variable_expenses_percent(ingredient_cost)
+        return unit_extras + percent_expenses
 
     def to_dict(self):
         return {

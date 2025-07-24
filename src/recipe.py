@@ -1,20 +1,29 @@
 class Recipe:
-    def __init__(self, name, servings, ingredients):
+    def __init__(self, name, servings, ingredients=None, category="general", layers=None):
         self.name = name
         self.servings = servings
-        self.ingredients = ingredients # list of dicts with name, quantity, unit
+        self.category = category  # massa, recheio, calda, montagem -> translated as mass, filling, syrup, assembly or general
+        self.ingredients = ingredients or []
+        self.layers = layers or []
 
     def to_dict(self):
-        return {
-            "nome": self.name,
-            "rendimento_bolos": self.servings,
-            "ingredientes": self.ingredients
+        base = {
+            "name": self.name,
+            "servings": self.servings,
+            "category": self.category
         }
+        if self.category == "montagem":
+            base["layers"] = self.layers
+        else:
+            base["ingredients"] = self.ingredients
+        return base
 
     @staticmethod
     def from_dict(data):
         return Recipe(
-            name=data["nome"],
-            servings=data["rendimento_bolos"],
-            ingredients=data["ingredientes"]
+            name=data["name"],
+            servings=data["servings"],
+            category=data.get("category", "general"),
+            ingredients=data.get("ingredients", []),
+            layers=data.get("layers", [])
         )

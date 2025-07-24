@@ -8,6 +8,77 @@ class RecipeManager:
         self.recipes_dir = recipes_dir
         os.makedirs(self.recipes_dir, exist_ok=True)
 
+    def register_recipe(self):
+        print("\nCadastro de nova receita")
+        name = input("Nome da receita: ").strip()
+        category = input("Categoria (massa, recheio, calda, montagem): ").strip().lower()
+
+        # Validação para rendimento (servings)
+        while True:
+            try:
+                servings = int(input("Rendimento (quantos bolos): "))
+                break
+            except ValueError:
+                print("Por favor, digite um número inteiro válido para o rendimento.")
+
+        if category == "montagem":
+            layers = []
+            while True:
+                description = input("\nDescrição da camada (ex: Base, Topo, Finalização): ").strip()
+                components = []
+                while True:
+                    comp_name = input(" - Nome do componente (ou ENTER para terminar a camada): ").strip()
+                    if not comp_name:
+                        break
+
+                    # Validação para quantidade do componente
+                    while True:
+                        try:
+                            quantity = float(input("   Quantidade usada (ex: 25): "))
+                            break
+                        except ValueError:
+                            print("Por favor, digite um número válido para a quantidade.")
+
+                    unit = input("   Unidade (g/ml): ").strip()
+                    components.append({
+                        "nome": comp_name,
+                        "quantidade": quantity,
+                        "unidade": unit
+                    })
+                layers.append({
+                    "descricao": description,
+                    "componentes": components
+                })
+                more = input("Adicionar outra camada? (s/n): ").strip().lower()
+                if more != "s":
+                    break
+            recipe = Recipe(name, servings, category=category, layers=layers)
+        else:
+            ingredients = []
+            while True:
+                ingredient_name = input(" - Nome do ingrediente (ou ENTER para terminar): ").strip()
+                if not ingredient_name:
+                    break
+
+                # Validação para quantidade do ingrediente
+                while True:
+                    try:
+                        quantity = float(input("   Quantidade usada (ex: 100): "))
+                        break
+                    except ValueError:
+                        print("Por favor, digite um número válido para a quantidade.")
+
+                unit = input("   Unidade (g/ml): ").strip()
+                ingredients.append({
+                    "nome": ingredient_name,
+                    "quantidade": quantity,
+                    "unidade": unit
+                })
+            recipe = Recipe(name, servings, category=category, ingredients=ingredients)
+
+        self.save_recipe(recipe)
+        print(f"\n✅ Receita '{name}' cadastrada com sucesso!\n")
+
     def save_recipe(self, recipe: Recipe):
         file_path = os.path.join(self.recipes_dir, f"{recipe.name.lower().replace(' ', '_')}.json")
         with open(file_path, 'w', encoding='utf-8') as f:
@@ -17,8 +88,12 @@ class RecipeManager:
         file_path = os.path.join(self.recipes_dir, f"{recipe_name.lower().replace(' ', '_')}.json")
         if not os.path.isfile(file_path):
             return None
-        with open(file_path, 'r', encoding='utf-8') as f:
-            data = json.load(f)
+        try:
+            with open(file_path, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+        except (json.JSONDecodeError, IOError):
+            print(f"Erro ao carregar a receita '{recipe_name}'. O arquivo está vazio ou corrompido.")
+            return None
         return Recipe.from_dict(data)
 
     def list_recipes(self) -> list[str]:

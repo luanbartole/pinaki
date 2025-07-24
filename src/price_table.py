@@ -32,7 +32,32 @@ class IngredientPriceTable:
         item = self.price_data.get(name)
         if not item:
             return None
-        return item["preco"] / item["quantidade"]
+
+        preco = item["preco"]
+        quantidade = item["quantidade"]
+        unidade_cadastrada = item.get("unidade")
+
+        # Se unidades iguais, só retorna o preço unitário direto
+        if unidade_cadastrada == unidade:
+            return preco / quantidade
+
+        # Conversões simples
+        conversoes = {
+            ("kg", "g"): 1000,
+            ("g", "kg"): 1 / 1000,
+            ("l", "ml"): 1000,
+            ("ml", "l"): 1 / 1000,
+        }
+
+        chave = (unidade_cadastrada, unidade)
+        if chave in conversoes:
+            fator = conversoes[chave]
+            quantidade_convertida = quantidade * fator
+            return preco / quantidade_convertida
+
+        # Se não conseguir converter, apenas retorna None (ou lança erro)
+        print(f"Unidade incompatível: cadastro '{unidade_cadastrada}', pedido '{unidade}'.")
+        return None
 
     def update_ingredient(self, name, preco=None, quantidade=None, unidade=None, purchase_date=None):
         if name not in self.price_data:
