@@ -268,20 +268,21 @@ def calculate_recipe_cost():
     print(f"Rendimento: {servings}\n")
 
     print("Produção e Lucro (Total):")
-    print(f"- Custo total dos ingredientes: R$ {result['custo_ingredientes']:.2f}")
-    print(f"- Custos fixos unitários x rendimento: R$ {unit_fixed_costs * servings:.2f}")
+    print(f"- Ingredientes: R$ {result['custo_ingredientes']:.2f}")
+    print(f"- Insumos e embalagens (embalagem, colher, lacre): R$ {unit_fixed_costs * servings:.2f}")
     print(f"- Outras despesas ({expense_pct:.0f}% sobre ingredientes): R$ {total_variable_expenses:.2f}")
     print(f"- Mão de obra ({labor_pct:.0f}% sobre ingredientes): R$ {result['mao_de_obra']:.2f}")
-    print(f"- Custo total (ingredientes + extras + mão): R$ {result['custo_total']:.2f}")
-    print(f"- Lucro total estimado ({profit_pct:.0f}%): R$ {result['lucro']:.2f}")
+    print(f"- Custo de Produção: R$ {result['custo_total']:.2f}")
+    print(f"- Lucro ({profit_pct:.0f}% sobre ingredientes): R$ {result['lucro']:.2f}")
     print(f"- Preço de venda sugerido: R$ {result['preco_venda']:.2f}")
 
     print("\nProdução e Lucro (Unidade):")
-    print(f"- Custos fixos unitários (embalagem, colher, lacre): R$ {unit_fixed_costs:.2f}")
+    print(f"- Ingredientes: R$ {result['custo_ingredientes'] / servings:.2f}")
+    print(f"- Insumos e embalagens (embalagem, colher, lacre): R$ {unit_fixed_costs:.2f}")
     print(f"- Outras despesas ({expense_pct:.0f}% sobre ingredientes): R$ {(total_variable_expenses / servings):.2f}")
     print(f"- Mão de obra ({labor_pct:.0f}% sobre ingredientes): R$ {(result['mao_de_obra'] / servings):.2f}")
-    print(f"- Custo por bolo (unidade): R$ {result['por_bolo']:.2f}")
-    print(f"- Lucro unitário estimado ({profit_pct:.0f}% sobre ingredientes): R$ {result['lucro_unitario']:.2f}")
+    print(f"- Custo de Produção: R$ {result['por_bolo']:.2f}")
+    print(f"- Lucro ({profit_pct:.0f}% sobre ingredientes): R$ {result['lucro_unitario']:.2f}")
     print(f"- Preço de venda sugerido (unidade): R$ {result['preco_venda'] / servings:.2f}")
 
 def main():

@@ -89,11 +89,15 @@ class Calculator:
 
             # Pular ingredientes sem preço (como água)
             if name not in self.price_table.price_data:
+                print(
+                    f"AVISO: Ingrediente '{name}' da receita '{self.recipe.name}' não tem preço cadastrado. Ignorando.")
                 continue
 
             # Calcular custo do ingrediente
             unit_price = self.price_table.get_unit_price(name, unit)
             if unit_price is None:
+                print(
+                    f"AVISO: Ingrediente '{name}' da receita '{self.recipe.name}' não tem preço para unidade '{unit}'. Ignorando.")
                 continue
 
             ingredient_cost += unit_price * qty
