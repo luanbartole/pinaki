@@ -6,13 +6,16 @@ class Calculator:
         self.recipe_manager = recipe_manager
 
     def compute(self):
+        warnings = []
+        infos = []
+
         if self.recipe.category != "montagem":
             raise ValueError("Só é possível calcular custo para receitas do tipo 'montagem'.")
 
         total_cost = 0.0
 
         for layer in self.recipe.layers:
-            print(f"\nCalculando camada: {layer['descricao']}")
+            infos.append(f"Calculando camada: {layer['descricao']}")
 
             for component in layer["componentes"]:
                 comp_name = component["nome"]
@@ -21,14 +24,13 @@ class Calculator:
 
                 sub_recipe = self.recipe_manager.load_recipe(comp_name)
                 if sub_recipe is None:
-                    print(f"AVISO: Receita '{comp_name}' não encontrada, pulando.")
+                    warnings.append(f"Receita '{comp_name}' não encontrada, pulando.")
                     continue
 
                 if sub_recipe.category == "montagem":
-                    print(f"AVISO: Sub-receita '{comp_name}' também é montagem. Ignorando para evitar recursão.")
+                    warnings.append(f"Sub-receita '{comp_name}' também é montagem. Ignorando para evitar recursão.")
                     continue
 
-                # Calcular custo base e peso total da sub-receita
                 sub_calc = Calculator(sub_recipe, self.price_table, self.config, self.recipe_manager)
                 sub_result = sub_calc._compute_base_cost()
 
@@ -37,28 +39,25 @@ class Calculator:
                 servings = sub_recipe.servings
 
                 if total_sub_weight is None or total_sub_weight == 0:
-                    print(f"AVISO: Peso total da sub-receita '{comp_name}' inválido. Pulando.")
+                    warnings.append(f"Peso total da sub-receita '{comp_name}' inválido. Pulando.")
                     continue
 
                 weight_per_serving = total_sub_weight / servings
-                used_weight = comp_qty  # assume que a unidade é compatível com g/ml
+                used_weight = comp_qty  # assume unidade compatível
 
                 proportional_cost = (used_weight / total_sub_weight) * total_sub_cost
 
-                print(
+                infos.append(
                     f"  Componente '{comp_name}': {comp_qty}{comp_unit} -> custo proporcional: R$ {proportional_cost:.2f}")
 
                 total_cost += proportional_cost
 
-        # Cálculos parciais com base em UMA unidade (1 bolo de pote)
         extras = self.config.calculate_total_extra_costs(total_cost)
         labor = self.config.calculate_labor(total_cost)
         profit = self.config.calculate_profit(total_cost)
 
-        # Número de bolos gerados pela montagem
         total_servings = self.recipe.servings
 
-        # Cálculo do custo total da receita inteira (e não só de 1 unidade)
         total_ingredients_cost = total_cost * total_servings
         total_extras = extras * total_servings
         total_labor = labor * total_servings
@@ -67,15 +66,21 @@ class Calculator:
         final_total_cost = total_ingredients_cost + total_extras + total_labor
         final_sale_price = total_ingredients_cost + total_labor + total_profit + total_extras
 
-        return {
+        resultado = {
             "custo_ingredientes": total_ingredients_cost,
             "extras": total_extras,
             "mao_de_obra": total_labor,
             "lucro": total_profit,
             "custo_total": final_total_cost,
-            "lucro_unitario": total_profit / total_servings,
+            "lucro_unitario": total_profit / total_servings if total_servings else 0,
             "preco_venda": final_sale_price,
-            "por_bolo": final_total_cost / total_servings
+            "por_bolo": final_total_cost / total_servings if total_servings else 0
+        }
+
+        return {
+            "resultado": resultado,
+            "warnings": warnings,
+            "infos": infos
         }
 
     def _compute_base_cost(self):
@@ -89,8 +94,9 @@ class Calculator:
 
             # Pular ingredientes sem preço (como água)
             if name not in self.price_table.price_data:
-                print(
-                    f"AVISO: Ingrediente '{name}' da receita '{self.recipe.name}' não tem preço cadastrado. Ignorando.")
+                if name.lower() != "água":  # ignora avisos para 'água'
+                    print(
+                        f"AVISO: Ingrediente '{name}' da receita '{self.recipe.name}' não tem preço cadastrado. Ignorando.")
                 continue
 
             # Calcular custo do ingrediente

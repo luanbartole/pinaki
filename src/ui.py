@@ -199,3 +199,24 @@ class RichUI:
         self.console.print(table_total)
         print()
         self.console.print(table_unit)
+
+    def print_colored_lines(self, lines: list[str], patterns_colors: dict[str, str], prefix_map: dict[str, str] = None):
+        """
+        Imprime linhas com cores e prefixos configuráveis,
+        adicionando uma linha em branco antes das linhas que contenham "Calculando camada:".
+        """
+        for line in lines:
+            applied = False
+            for pattern, color in patterns_colors.items():
+                if pattern in line:
+                    # Adiciona linha em branco antes se o padrão for "Calculando camada:"
+                    if pattern == "Calculando camada:":
+                        self.console.print("")  # linha em branco
+
+                    prefix = prefix_map.get(pattern, "") if prefix_map else ""
+                    to_print = f"{prefix} {line.strip()}" if prefix else line.strip()
+                    self.console.print(f"[bold {color}]{to_print}[/bold {color}]")
+                    applied = True
+                    break
+            if not applied:
+                self.console.print(line.strip())

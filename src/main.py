@@ -340,34 +340,52 @@ def calculate_recipe_cost():
     montagem_recipes = [r for r in manager.list_recipes() if r.category == "montagem"]
 
     if not montagem_recipes:
-        print("\n⚠️ Nenhuma receita com categoria 'montagem' foi encontrada.")
+        ui.print_warning("Nenhuma receita com categoria 'montagem' foi encontrada.")
         return
 
     ui.print_all_recipes_table(montagem_recipes)
 
     choice = input("Escolha o número da receita para calcular o custo: ").strip()
+    print()
     if not choice.isdigit() or not (1 <= int(choice) <= len(montagem_recipes)):
-        print("Opção inválida.")
+        ui.print_error("Opção inválida.")
         return
 
     selected_recipe = montagem_recipes[int(choice) - 1]
     recipe = manager.load_recipe(selected_recipe.name)
 
     if not recipe:
-        print("Erro ao carregar a receita.")
+        ui.print_error("Erro ao carregar a receita.")
         return
 
     calculator = Calculator(recipe, price_table, config, manager)
-    result = calculator.compute()
+    compute_result = calculator.compute()
 
-    # Adiciona servings ao result para usar na UI
-    result['servings'] = recipe.servings
+    patterns_colors = {
+        "Calculando camada:": "blue",
+        "Componente": "blue"
+    }
+    prefix_map = {
+        "Calculando camada:": "✅",
+        "Componente": "→"
+    }
+
+    ui.print_colored_lines(compute_result.get("infos", []), patterns_colors, prefix_map)
+
+    for warning_msg in compute_result.get("warnings", []):
+        ui.print_warning(warning_msg)
+
+    resultado = compute_result["resultado"]
+
+    # Adiciona servings ao resultado para usar na UI
+    resultado['servings'] = recipe.servings
 
     print(f"\n=== CUSTO DA RECEITA DE MONTAGEM: {recipe.name} ===")
     print(f"Rendimento: {recipe.servings}\n")
 
     # Imprime tabelas total e unidade
-    ui.print_production_profit_tables(result, config)
+    ui.print_production_profit_tables(resultado, config)
+
 
 
 
